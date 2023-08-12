@@ -1,13 +1,13 @@
 from pydantic import BaseModel
-from typing import Sequence
+from typing import Optional, Sequence
 
 from .enums import AlbumType
 
 
 class Thumbnail(BaseModel):
     url: str
-    height: str
-    width: str
+    height: int
+    width: int
 
 
 class Album(BaseModel):
@@ -15,7 +15,7 @@ class Album(BaseModel):
     playlist_id: str
     title: str
     type: AlbumType
-    year: int
+    year: Optional[int]
     thumbnails: Sequence[Thumbnail]
 
 

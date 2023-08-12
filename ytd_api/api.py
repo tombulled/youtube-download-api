@@ -1,8 +1,11 @@
 from typing import Any, Mapping, Sequence
-from ytd_api.clients import WEB_REMIX
-from ytd_api.models import Channel, Thumbnail, Album
-from ytd_api import utils
+
 import httpx
+
+from . import utils
+from .clients import WEB_REMIX
+from .enums import AlbumType
+from .models import Album, Channel, Thumbnail
 
 
 def yt_complete_search(query: str, /) -> Sequence[str]:
@@ -112,7 +115,7 @@ def get_channel_albums(channel_id: str, /):
                 ],
                 title=utils.text(music_two_row_item_renderer["title"]),
                 type=utils.text_all(music_two_row_item_renderer["subtitle"])[0],
-                year=utils.text_all(music_two_row_item_renderer["subtitle"])[2],
+                year=utils.text_all(music_two_row_item_renderer["subtitle"])[-1],
                 thumbnails=music_two_row_item_renderer["thumbnailRenderer"][
                     "musicThumbnailRenderer"
                 ]["thumbnail"]["thumbnails"],
@@ -124,7 +127,62 @@ def get_channel_albums(channel_id: str, /):
 
 # /channel/{id}/singles
 def get_channel_singles(channel_id: str, /):
-    ...
+    data: dict = WEB_REMIX.browse(channel_id)
+
+    contents: Sequence[Mapping[str, Mapping[str, Any]]] = data["contents"][
+        "singleColumnBrowseResultsRenderer"
+    ]["tabs"][0]["tabRenderer"]["content"]["sectionListRenderer"]["contents"]
+
+    contents_map: Mapping[str, Sequence[Mapping[str, Any]]] = utils.flatten(contents)
+
+    music_carousel_shelf_renderers: Sequence[Mapping[str, Any]] = contents_map[
+        "musicCarouselShelfRenderer"
+    ]
+
+    music_carousel_shelf_renderer: Mapping[str, Any] = utils.filter_one(
+        music_carousel_shelf_renderers,
+        lambda music_carousel_shelf_renderer: utils.text(
+            music_carousel_shelf_renderer["header"][
+                "musicCarouselShelfBasicHeaderRenderer"
+            ]["title"]
+        )
+        == "Singles",
+    )
+
+    # TODO: Use me to get page with all singles on
+    more_button_browse_params: str = music_carousel_shelf_renderer["header"][
+        "musicCarouselShelfBasicHeaderRenderer"
+    ]["moreContentButton"]["buttonRenderer"]["navigationEndpoint"]["browseEndpoint"][
+        "params"
+    ]
+
+    music_two_row_item_renderers: Sequence[Mapping[str, Any]] = utils.flatten(
+        music_carousel_shelf_renderer["contents"]
+    )["musicTwoRowItemRenderer"]
+
+    return [
+        Album.parse_obj(
+            dict(
+                browse_id=music_two_row_item_renderer["navigationEndpoint"][
+                    "browseEndpoint"
+                ]["browseId"],
+                playlist_id=music_two_row_item_renderer["thumbnailOverlay"][
+                    "musicItemThumbnailOverlayRenderer"
+                ]["content"]["musicPlayButtonRenderer"]["playNavigationEndpoint"][
+                    "watchPlaylistEndpoint"
+                ][
+                    "playlistId"
+                ],
+                title=utils.text(music_two_row_item_renderer["title"]),
+                type=AlbumType.SINGLE,
+                year=utils.text_all(music_two_row_item_renderer["subtitle"])[-1],
+                thumbnails=music_two_row_item_renderer["thumbnailRenderer"][
+                    "musicThumbnailRenderer"
+                ]["thumbnail"]["thumbnails"],
+            )
+        )
+        for music_two_row_item_renderer in music_two_row_item_renderers
+    ]
 
 
 # /channel/{id}/videos
@@ -134,7 +192,55 @@ def get_channel_videos(channel_id: str, /):
 
 # /channel/{id}/featured/playlists
 def get_channel_featured_playlists(channel_id: str, /):
-    ...
+    data: dict = WEB_REMIX.browse(channel_id)
+
+    contents: Sequence[Mapping[str, Mapping[str, Any]]] = data["contents"][
+        "singleColumnBrowseResultsRenderer"
+    ]["tabs"][0]["tabRenderer"]["content"]["sectionListRenderer"]["contents"]
+
+    contents_map: Mapping[str, Sequence[Mapping[str, Any]]] = utils.flatten(contents)
+
+    music_carousel_shelf_renderers: Sequence[Mapping[str, Any]] = contents_map[
+        "musicCarouselShelfRenderer"
+    ]
+
+    music_carousel_shelf_renderer: Mapping[str, Any] = utils.filter_one(
+        music_carousel_shelf_renderers,
+        lambda music_carousel_shelf_renderer: utils.text(
+            music_carousel_shelf_renderer["header"][
+                "musicCarouselShelfBasicHeaderRenderer"
+            ]["title"]
+        )
+        == "Featured on",
+    )
+
+    music_two_row_item_renderers: Sequence[Mapping[str, Any]] = utils.flatten(
+        music_carousel_shelf_renderer["contents"]
+    )["musicTwoRowItemRenderer"]
+
+    return [
+        Album.parse_obj(
+            dict(
+                browse_id=music_two_row_item_renderer["navigationEndpoint"][
+                    "browseEndpoint"
+                ]["browseId"],
+                playlist_id=music_two_row_item_renderer["thumbnailOverlay"][
+                    "musicItemThumbnailOverlayRenderer"
+                ]["content"]["musicPlayButtonRenderer"]["playNavigationEndpoint"][
+                    "watchPlaylistEndpoint"
+                ][
+                    "playlistId"
+                ],
+                title=utils.text(music_two_row_item_renderer["title"]),
+                type=utils.text_all(music_two_row_item_renderer["subtitle"])[0],
+                year=None,
+                thumbnails=music_two_row_item_renderer["thumbnailRenderer"][
+                    "musicThumbnailRenderer"
+                ]["thumbnail"]["thumbnails"],
+            )
+        )
+        for music_two_row_item_renderer in music_two_row_item_renderers
+    ]
 
 
 # /channel/{id}/featured/channels

@@ -9,3 +9,5 @@ class StrEnum(str, Enum):
 class AlbumType(StrEnum):
     ALBUM: str = "Album"
     EP: str = "EP"
+    SINGLE: str = "Single"
+    PLAYLIST: str = "Playlist"
