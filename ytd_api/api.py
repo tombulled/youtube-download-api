@@ -1,4 +1,4 @@
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, Optional, Sequence
 
 import httpx
 
@@ -89,12 +89,18 @@ def get_channel_albums(channel_id: str, /):
         == "Albums",
     )
 
+    music_carousel_shelf_basic_header_renderer = music_carousel_shelf_renderer[
+        "header"
+    ]["musicCarouselShelfBasicHeaderRenderer"]
+
     # TODO: Use me to get page with all albums on
-    more_button_browse_params: str = music_carousel_shelf_renderer["header"][
-        "musicCarouselShelfBasicHeaderRenderer"
-    ]["moreContentButton"]["buttonRenderer"]["navigationEndpoint"]["browseEndpoint"][
-        "params"
-    ]
+    more_button_browse_params: Optional[str] = (
+        music_carousel_shelf_basic_header_renderer["moreContentButton"][
+            "buttonRenderer"
+        ]["navigationEndpoint"]["browseEndpoint"]["params"]
+        if "moreContentButton" in music_carousel_shelf_basic_header_renderer
+        else None
+    )
 
     music_two_row_item_renderers: Sequence[Mapping[str, Any]] = utils.flatten(
         music_carousel_shelf_renderer["contents"]

@@ -11,15 +11,21 @@ from httpx import Response
 
 from innertube import InnerTube
 
+import ytd_api.models
+from ytd_api.api import get_channel_albums
+
 """
 TODO:
-    Air Review
-    alt-J
-    Arctic Monkeys
-    AWOLNATION
+    1. Support downloading age-aged content, e.g. https://www.youtube.com/watch?v=nLfhkoB4D5k&list=OLAK5uy_nabdgZPZ32q9j3ROBMe0o_xZZiBnUmmAE&index=11
+
+TODO:
+    (x) Air Review
+    (x) alt-J
+    (x) Arctic Monkeys
+    (x) AWOLNATION
     Bad Suns
     Bag Raiders
-    Band of Horses <---
+    Band of Horses
     Bastille
     Bear's Den
     Bleachers
@@ -31,7 +37,11 @@ TODO:
     Death Cab for Cutie
     Declan McKenna
     ...
+    Red Hot Chilli Peppers
+    ...
     Still Woozy <--
+    ...
+    The Lumineers
 """
 
 
@@ -39,38 +49,6 @@ def delay() -> None:
     timeout: float = random.randint(2000, 5000) / 1000
 
     time.sleep(timeout)
-
-ALBUM_BROWSE_IDS: Sequence[str] = (
-    # Air Review
-    # "OLAK5uy_nGYEmLIPZQAFGT8WvfaYVzQzti3ut1psE", # Landmarks
-    # "OLAK5uy_m-H-QaroA92wigoIwc13fqYWk4s-r_h_8", # Low Wishes
-    # "OLAK5uy_nr2rAZQWxYhPlhg9YEer4vMDQXgA3cUPo", # How We Got By
-
-    # Amber Run
-    # "OLAK5uy_lqinhYxeDfCZtbt8N1GdI6aqlj44ThfMU" # Spark EP
-    # "OLAK5uy_nB_qEA_pG8EZia0z58eDE25v1i0fpSNH0" # Pilot EP
-    # "OLAK5uy_kEH-J7dPuErmAozzG-CTVDOklQIG_xP6g" # 5AM (Expanded Edition)
-    # "OLAK5uy_mMR_VYCeV0xhW_Nfo3U2qukj9Y_I0T-wE" # For A Moment, I Was Lost
-    # "OLAK5uy_kQrMjMljbR28Ge-EwC8AmTmoN4e1qx24w" # Acoustic EP
-    # "OLAK5uy_n0oZXFeNxRvK0ZV6P-_qm2EiEOOoBe_wI" # The Assembly
-    # "OLAK5uy_k-nVhxfuIQFO2ZE9EvqPKKM4__S3aOb_Y" # Philophobia
-    # "OLAK5uy_kHykDXcCDzpye0foS6E1crEZJRW8uo58A" # The Search (Act I)
-    # "OLAK5uy_mL2zfBIO9DFJlHguE0XFv0sZdmar3Wv58" # The Start (Act II)
-    # "OLAK5uy_lPqeK5z74imJPGxul-pU_U_6-s0qOctug" # How To Be Human
-
-    # Aquilo
-    # "OLAK5uy_mdZx9ip6w7LcOwL4LsLJY1ewjoERMeJGs" # In The Low Light (Live)
-    # "OLAK5uy_m9x1ATvvF-BHUVbEW0XyTdrzbtC_WxsrM" # Live From RAK Studios
-    # "OLAK5uy_nCyEX0Zzgd22KA07Z8LUZ3STLktKMbWYQ" # Aquilo
-    # "OLAK5uy_lnohUgmn9QftycLEqIqQZli57FSf2AvWY" # Human
-    # "OLAK5uy_nx04vFkplXV9X85by-8mP46JLmTNqweW0" # Calling Me
-    # "OLAK5uy_msaMtkKquZeUqQ6sMOr0kk6TQydo9cZYY" # Midnight (Live EP)
-    # "OLAK5uy_khNLsz9s6ueH8YHdzORuy4PORu6tWvMrY" # Silhouettes
-    # "OLAK5uy_nAHK5zWEf-pf-3KXSj93NA8ZGyjTBfJUg" # ii
-    # "OLAK5uy_lW66eJCF7wQ4hhtHkTYjYy1Wh-ctYE8lY" # ii (Reworks)
-    # "OLAK5uy_kRjXobVjFEz323V44CIfuKCKRngWX-Ogg" # A Safe Place To Be
-    # "OLAK5uy_ndMEnXwNd0HkeljYKBuzKHoHpJB3NX8mU" # Sober EP
-)
 
 
 @dataclass
@@ -254,19 +232,37 @@ def get_yt_playlist_page(playlist_id: str, /) -> PlaylistPage:
 
     data: dict = client.browse("VL" + playlist_id)
 
-    playlist_video_list_renderer: dict = data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][0]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]["playlistVideoListRenderer"]
+    playlist_video_list_renderer: dict = data["contents"][
+        "twoColumnBrowseResultsRenderer"
+    ]["tabs"][0]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0][
+        "itemSectionRenderer"
+    ][
+        "contents"
+    ][
+        0
+    ][
+        "playlistVideoListRenderer"
+    ]
     playlist_header_renderer: dict = data["header"]["playlistHeaderRenderer"]
-    playlist_sidebar_primary_info_renderer: dict = data["sidebar"]["playlistSidebarRenderer"]["items"][0]["playlistSidebarPrimaryInfoRenderer"]
+    playlist_sidebar_primary_info_renderer: dict = data["sidebar"][
+        "playlistSidebarRenderer"
+    ]["items"][0]["playlistSidebarPrimaryInfoRenderer"]
     microformat_data_renderer: dict = data["microformat"]["microformatDataRenderer"]
 
     phr_playlist_id: str = playlist_header_renderer["playlistId"]
-    phr_thumbnail_url: str = playlist_header_renderer["playlistHeaderBanner"]["heroPlaylistThumbnailRenderer"]["thumbnail"]["thumbnails"][-1]["url"]
+    phr_thumbnail_url: str = playlist_header_renderer["playlistHeaderBanner"][
+        "heroPlaylistThumbnailRenderer"
+    ]["thumbnail"]["thumbnails"][-1]["url"]
     phr_title: str = playlist_header_renderer["title"]["simpleText"]
     phr_subtitle: str = playlist_header_renderer["subtitle"]["simpleText"]
 
-    pspir_thumbnail_url: str = playlist_sidebar_primary_info_renderer["thumbnailRenderer"]["playlistCustomThumbnailRenderer"]["thumbnail"]["thumbnails"][-1]["url"]
+    pspir_thumbnail_url: str = playlist_sidebar_primary_info_renderer[
+        "thumbnailRenderer"
+    ]["playlistCustomThumbnailRenderer"]["thumbnail"]["thumbnails"][-1]["url"]
 
-    mf_thumbnail_url: str = microformat_data_renderer["thumbnail"]["thumbnails"][-1]["url"]
+    mf_thumbnail_url: str = microformat_data_renderer["thumbnail"]["thumbnails"][-1][
+        "url"
+    ]
 
     pvlr_playlist_id: str = playlist_video_list_renderer["playlistId"]
 
@@ -276,11 +272,17 @@ def get_yt_playlist_page(playlist_id: str, /) -> PlaylistPage:
         playlist_video_renderer = playlist_video_renderer["playlistVideoRenderer"]
 
         pvr_video_id: str = playlist_video_renderer["videoId"]
-        pvr_thumbnail_url: str = playlist_video_renderer["thumbnail"]["thumbnails"][-1]["url"]
+        pvr_thumbnail_url: str = playlist_video_renderer["thumbnail"]["thumbnails"][-1][
+            "url"
+        ]
         pvr_title: str = playlist_video_renderer["title"]["runs"][0]["text"]
         pvr_index: str = playlist_video_renderer["index"]["simpleText"]
-        pvr_channel_name: str = playlist_video_renderer["shortBylineText"]["runs"][0]["text"]
-        pvr_channel_id: str = playlist_video_renderer["shortBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"]
+        pvr_channel_name: str = playlist_video_renderer["shortBylineText"]["runs"][0][
+            "text"
+        ]
+        pvr_channel_id: str = playlist_video_renderer["shortBylineText"]["runs"][0][
+            "navigationEndpoint"
+        ]["browseEndpoint"]["browseId"]
         pvr_length: str = playlist_video_renderer["lengthSeconds"]
 
         pvlr_songs.append(
@@ -393,15 +395,24 @@ def download(url: str, path: Path) -> None:
         for data in response.iter_bytes(chunk_size=8196):
             file.write(data)
 
-album_index: int
-album_playlist_id: str
-for album_index, album_playlist_id in enumerate(ALBUM_BROWSE_IDS):
-    if album_index > 0:
-        delay()
 
-    playlist: PlaylistPage = get_yt_playlist_page(album_playlist_id)
+channel_id: str = input("Channel ID: ")
 
-    rich.print(f"Downloading: {playlist.name!r} by {playlist.channel_name!r}")
+print()
+
+delay()
+
+albums: Sequence[ytd_api.models.Album] = get_channel_albums(channel_id)
+
+album: ytd_api.models.Album
+for album in albums:
+    delay()
+
+    playlist: PlaylistPage = get_yt_playlist_page(album.playlist_id)
+
+    rich.print(
+        f"Downloading: {playlist.name!r} by {playlist.channel_name!r} ({album.type.value}, {album.year})"
+    )
 
     music_dir: Path = Path.home() / "Music"
 
@@ -420,18 +431,37 @@ for album_index, album_playlist_id in enumerate(ALBUM_BROWSE_IDS):
     index: int
     track: PlaylistSong
     for index, track in enumerate(playlist.songs):
-        track_path: Path = album_dir.joinpath(f"{str(index+1).zfill(2)} - {track.name}.m4a")
+        safe_track_name: str = track.name.translate(
+            str.maketrans(
+                {
+                    char: "_"
+                    for char in ("/", "<", ">", ":", '"', "/", "\\", "|", "?", "*")
+                }
+            )
+        )
+        track_path: Path = album_dir.joinpath(
+            f"{str(index+1).zfill(2)} - {safe_track_name}.m4a"
+        )
+
+        rich.print(
+            f"\t ({str(index+1).zfill(2)}/{str(total_tracks).zfill(2)}) {track.name!r} [{track.id!r}]"
+        )
 
         if track_path.exists():
+            rich.print("\t\t (already downloaded, skipping.)")
             continue
 
         delay()
-        track_url: Optional[str] = get_video_stream_url(track.id)
+
+        try:
+            track_url: Optional[str] = get_video_stream_url(track.id)
+        except Exception as error:
+            rich.print(f"\t\t ERROR: {error}")
+            continue
 
         if track_url is None:
             continue
 
-        rich.print(f"\t ({str(index+1).zfill(2)}/{str(total_tracks).zfill(2)}) {track.name!r}")
 
         delay()
 
