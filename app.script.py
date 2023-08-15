@@ -25,7 +25,7 @@ TODO:
     (x) AWOLNATION
     Bad Suns
     Bag Raiders
-    Band of Horses
+    (x) Band of Horses
     Bastille
     Bear's Den
     Bleachers
@@ -37,7 +37,11 @@ TODO:
     Death Cab for Cutie
     Declan McKenna
     ...
+    Easy Life
+    ...
     Red Hot Chilli Peppers
+    ...
+    Rex Orange County
     ...
     Still Woozy <--
     ...
@@ -404,14 +408,19 @@ delay()
 
 albums: Sequence[ytd_api.models.Album] = get_channel_albums(channel_id)
 
-album: ytd_api.models.Album
-for album in albums:
+playlist_ids: Sequence[str] = [
+    album.playlist_id
+    for album in albums
+]
+
+playlist_id: str
+for playlist_id in playlist_ids:
     delay()
 
-    playlist: PlaylistPage = get_yt_playlist_page(album.playlist_id)
+    playlist: PlaylistPage = get_yt_playlist_page(playlist_id)
 
     rich.print(
-        f"Downloading: {playlist.name!r} by {playlist.channel_name!r} ({album.type.value}, {album.year})"
+        f"Downloading: {playlist.name!r} by {playlist.channel_name!r}"
     )
 
     music_dir: Path = Path.home() / "Music"
