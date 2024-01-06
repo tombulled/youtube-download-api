@@ -9,6 +9,7 @@ packages = [{include = "youtube_download_api"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+fastapi = "^0.108.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.17.5"

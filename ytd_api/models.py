@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import Optional, Sequence
+
+from pydantic import BaseModel
 
 from .enums import AlbumType
 

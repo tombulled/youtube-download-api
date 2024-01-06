@@ -1,0 +1,6 @@
+This was parked as hackily parsing the responses from the innertube api
+is just a recipe for constant headaches. Instead, the responses should
+be parsed in the same way YouTube do it.
+
+The 'feature/deserialise' branch of 'innertube' is where the current
+effort to properly deserialise the data resides.

@@ -1,8 +1,8 @@
-from typing import Final, Sequence
+from typing import Final
 
 from innertube import InnerTube
 
-__all__: Sequence[str] = ("WEB", "WEB_REMIX", "IOS", "IOS_MUSIC")
+__all__ = ("WEB", "WEB_REMIX", "IOS", "IOS_MUSIC")
 
 WEB: Final[InnerTube] = InnerTube("WEB", "2.20230728.00.00")
 WEB_REMIX: Final[InnerTube] = InnerTube("WEB_REMIX", "1.20220607.03.01")

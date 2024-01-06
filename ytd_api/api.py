@@ -7,6 +7,32 @@ from .clients import WEB_REMIX
 from .enums import AlbumType
 from .models import Album, Channel, Thumbnail
 
+"""
+/search?q={query}
+/search/channels?q={query} OR /search?q={query}&type={channel}
+/search/suggestions?q={query}
+
+/channel/{id}
+/channel/{id}/albums
+/channel/{id}/singles
+/channel/{id}/songs
+/channel/{id}/videos
+/channel/{id}/featured/playlists
+/channel/{id}/featured/channels
+
+/playlist/{id}
+
+/album/{id}
+
+/video/{id}
+
+/explore
+/explore/new-releases
+/explore/charts
+/explore/moods-and-genres
+/explore/podcasts
+"""
+
 
 def yt_complete_search(query: str, /) -> Sequence[str]:
     r = httpx.get(
